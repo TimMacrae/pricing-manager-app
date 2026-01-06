@@ -1,0 +1,21 @@
+[project]
+name = "pricing-manager-app-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+dependencies = [
+  "Django>=5.0",
+  "djangorestframework>=3.15",
+  "django-cors-headers>=4.0",
+  "mysqlclient>=2.2",
+  "celery>=5.4",
+  "redis>=5.0",
+  "SQLAlchemy>=2.0",
+  "pandas>=2.2",
+  "numpy>=2.0",
+  "scikit-learn>=1.5",
+  "tensorflow>=2.16",
+  "openpyxl>=3.1",
+  "pymysql>=1.1",
+  "cryptography>=46.0.3",
+]

@@ -1,0 +1,99 @@
+services:
+  mysql_source:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${MYSQL_SOURCE_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_source_data:/var/lib/mysql
+
+  mysql_analytics:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${MYSQL_ANALYTICS_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_analytics_data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    command: bash -lc "uv run python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql_source
+      - mysql_analytics
+      - redis
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      MYSQL_SOURCE_HOST: ${MYSQL_SOURCE_HOST}
+      MYSQL_ANALYTICS_HOST: ${MYSQL_ANALYTICS_HOST}
+      MYSQL_SOURCE_DB: ${MYSQL_SOURCE_DB}
+      MYSQL_ANALYTICS_DB: ${MYSQL_ANALYTICS_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+
+  celery_worker:
+    build: ./backend
+    command: bash -lc "uv run celery -A config.celery_app worker -l info"
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    depends_on:
+      - backend
+      - redis
+      - mysql_source
+      - mysql_analytics
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      MYSQL_SOURCE_HOST: ${MYSQL_SOURCE_HOST}
+      MYSQL_ANALYTICS_HOST: ${MYSQL_ANALYTICS_HOST}
+      MYSQL_SOURCE_DB: ${MYSQL_SOURCE_DB}
+      MYSQL_ANALYTICS_DB: ${MYSQL_ANALYTICS_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+
+  celery_beat:
+    build: ./backend
+    command: bash -lc "uv run celery -A config.celery_app beat -l info"
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    depends_on:
+      - celery_worker
+      - redis
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      REDIS_HOST: ${REDIS_HOST}
+
+volumes:
+  mysql_source_data:
+  mysql_analytics_data:
+  backend_venv:
