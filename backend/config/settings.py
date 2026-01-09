@@ -33,6 +33,9 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
 # Application definition
 
 INSTALLED_APPS = [
+    # testing app for custom user model
+    "testing",
+    # Default Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,7 +49,7 @@ INSTALLED_APPS = [
 
     # Local apps
     "pricing",
-    "testing",
+
 ]
 
 MIDDLEWARE = [
